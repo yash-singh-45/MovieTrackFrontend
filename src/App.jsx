@@ -1,6 +1,6 @@
 import React from "react";
-// import Login from "./Components/Login";
-// import Signup from "./Components/SignUp";
+import Login from "./Components/Login";
+import Signup from "./Components/SignUp";
 import Home from "./Components/Home";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -12,22 +12,22 @@ import WatchList from "./Components/WatchList";
 import Actors from "./Components/Actors";
 
 const router = createBrowserRouter([
-  // {
-  //   path: "/login",
-  //   element: <Login />,
-  // },
-  // {
-  //   path: "/signup",
-  //   element: <Signup />,
-  // },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/signup",
+    element: <Signup />,
+  },
   {
     path: "/",
     element: <Home />
   },
-  // {
-  //   path: "/profile",
-  //   element: <Profile />
-  // },
+  {
+    path: "/profile",
+    element: <Profile />
+  },
   {
     path: "search",
     element:

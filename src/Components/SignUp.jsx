@@ -41,7 +41,7 @@ export default function Signup() {
 
         try {
             const response = await fetch(
-                "http://localhost:8080/auth/signup",
+                "https://cinetrack-production-85a5.up.railway.app/auth/signup",
                 {
                     method: "POST",
                     headers: {
