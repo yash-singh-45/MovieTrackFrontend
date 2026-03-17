@@ -24,7 +24,7 @@ export default function Login() {
 
         try {
             const response = await fetch(
-                "https://cinetrack-production-85a5.up.railway.app/auth/login",
+                "https://cinetrack-production-8848.up.railway.app/auth/login",
                 {
                     method: "POST",
                     headers: {

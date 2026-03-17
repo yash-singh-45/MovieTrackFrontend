@@ -21,7 +21,7 @@ import ProfileSkeleton from './ProfileSkeleton';
         }
 
         try {
-          const response = await fetch(`https://cinetrack-production-85a5.up.railway.app/api/users/${userId}`, {
+          const response = await fetch(`https://cinetrack-production-8848.up.railway.app/api/users/${userId}`, {
             headers: {
               "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json"
