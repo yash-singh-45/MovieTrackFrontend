@@ -10,6 +10,8 @@ import Navbar from "./Components/Navbar";
 import MoviePage from "./Components/MoviePage";
 import WatchList from "./Components/WatchList";
 import Actors from "./Components/Actors";
+import Reviews from "./Components/Reviews";
+import WriteReview from "./Components/WriteReview";
 
 const router = createBrowserRouter([
   {
@@ -47,6 +49,14 @@ const router = createBrowserRouter([
   {
     path: "/bio/:role/:name",
     element: <Actors />
+  },
+  {
+    path: "/reviews/:imdbId",
+    element: <Reviews />
+  },
+  {
+    path: "/reviews/:imdbId/write-review",
+    element: <WriteReview />
   }
 ]);
 

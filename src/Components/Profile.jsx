@@ -1,52 +1,27 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProfileSkeleton from './ProfileSkeleton';
+import { AuthContext } from './AuthContext';
 
-  const Profile = () => {
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+const Profile = () => {
+  const navigate = useNavigate();
+  const { user , loading } = useContext(AuthContext);
 
-    useEffect(() => {
-      const getProfile = async () => {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("userId");
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("User not logged in");
+      navigate("/");
+      return;
+    }
+  }, [user, loading, navigate]);
 
-        if (!token) {
-          navigate("/login");
-          return;
-        }
+  if (loading) return <ProfileSkeleton />;
 
-        try {
-          const response = await fetch(`https://cinetrack-production-8848.up.railway.app/api/users/${userId}`, {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }
-          });
+  if (!user) return null;
 
-          if (response.ok) {
-            const data = await response.json();
-            setUserData(data);
-          } else {
-            toast.error("Session expired. Please login again.");
-            localStorage.clear();
-            navigate("/login");
-          }
-        } catch (err) {
-          console.error("Profile fetch error:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      getProfile();
-    }, [navigate]);
-
-    if(loading) return <ProfileSkeleton />;
+  const userData = user;
 
   return (
     <div className="bg-[#0F1117] min-h-screen text-white px-4 sm:px-10 py-8">

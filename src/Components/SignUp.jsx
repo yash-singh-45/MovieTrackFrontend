@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, {  useState } from 'react';
 import theatrepic from '../assets/theatre.jpg'
 import { Link, useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from "uuid";
 import toast from "react-hot-toast";
 
 const CineTrackIcon = () => (
@@ -15,6 +14,7 @@ export default function Signup() {
     const [userPass, setUserPass] = useState("");
     const [confirmPass, setConfirmPass] = useState("");
     const Navigate = useNavigate();
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

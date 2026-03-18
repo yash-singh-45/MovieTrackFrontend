@@ -1,22 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, LogIn, Heart, Bookmark } from 'lucide-react'; // Optional icons
+import { useContext } from "react";
+import { AuthContext } from "./AuthContext";
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
+    const {user, logout} = useContext(AuthContext);
     
-    const isLoggedIn = !!localStorage.getItem("token");
-
     const handleNavigation = (path) => {
         navigate(path);
         onClose();
     };
 
-    const handleLogout = () => {
-        localStorage.clear();
-        navigate("/");
+    const handleLogout = () =>{
+        logout();
         onClose();
-        window.location.reload(); 
-    };
+    }
 
     return (
         <>
@@ -38,7 +37,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                     <nav className="flex flex-col gap-6 flex-1">
                         {/* Profile Section (Only if Logged In) */}
-                        {isLoggedIn && (
+                        {user && (
                             <button
                                 onClick={() => handleNavigation("/profile")}
                                 className="cursor-pointer flex items-center gap-3 text-base md:text-lg text-[#00FFD1] hover:opacity-80 transition"
@@ -64,7 +63,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                     {/* Bottom Action Button */}
                     <div className="mt-auto pb-4">
-                        {isLoggedIn ? (
+                        {user ? (
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-3 rounded-lg hover:bg-red-500 hover:text-white transition"

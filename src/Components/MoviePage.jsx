@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import netflix from '/src/assets/netflix_logo.png'
@@ -13,7 +13,6 @@ import jiocinema from '/src/assets/Jio_cinema_logo.png'
 import appletv from '/src/assets/apple-tv.jpg'
 import lionsgate from '/src/assets/lionsgate_logo.png'
 import sunnxt from '/src/assets/sunnxt_logo.png'
-// import Skeleton from "react-loading-skeleton";
 
 const tmdbApi = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -113,7 +112,7 @@ Return only in JSON:
         `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&type=${media}&apikey=${apikey}`
       );
       const data = await res.json();
-      console.log(data);
+
       if (data.Response === "True") {
         const mappedMovie = {
           title: data.Title,
@@ -558,10 +557,19 @@ Return only in JSON:
                   <div className="text-sm md:text-xl -ml-3">⭐</div>
                   <div className="text-xs md:text-sm lg:text-lg text-gray-400">Average Rating</div>
                 </div>
-                {/* <div className="text-sm text-gray-400">
-                  <p>Snapshots of user reviews will appear here. Add the review component or list as needed.</p>
-                </div> */}
               </div>
+              <Link
+                to={`/reviews/${imdbId}`}
+                state={movie}
+                className="group flex items-center gap-1 mt-5 text-blue-400 hover:text-blue-300 text-sm sm:text-base font-medium transition-colors duration-200"
+              >
+                <span className="border-b border-transparent group-hover:border-blue-300 pb-0.5">
+                  See All Reviews
+                </span>
+                <span className="transition-transform duration-200 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
             </div>
 
             {/* MORE LIKE THIS */}
@@ -577,21 +585,12 @@ Return only in JSON:
               <h3 className="text-lg md:text-xl lg:text-2xl font-semibold mb-2">Details</h3>
               <p className="text-sm md:text-base lg:text-lg">
                 <span className=" text-gray-300">Director: </span>
-                <span onClick={ () => handleDirectorClick(movie.details.director)} className="text-blue-400 hover:underline cursor-pointer">{movie.details.director}</span>
+                <span onClick={() => handleDirectorClick(movie.details.director)} className="text-blue-400 hover:underline cursor-pointer">{movie.details.director}</span>
               </p>
               <p className="text-sm md:text-base lg:text-lg text-gray-300">Writers: {movie.details.writers}</p>
               <p className="text-sm md:text-base lg:text-lg text-gray-300">Budget: {movie.details.budget}</p>
             </div>
 
-            {/* <div className="bg-[#141518] rounded-xl p-4 border border-gray-800 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden">
-                <img src="/user.jpg" alt="user" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 text-sm text-gray-300">
-                <div className="font-medium">No rating yet</div>
-                <div className="text-xs text-gray-500">Sign in to add your rating and review</div>
-              </div>
-            </div> */}
           </aside>
         </div>
 
