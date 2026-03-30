@@ -1,4 +1,4 @@
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 import theatrepic from '../assets/theatre.jpg'
 import { Link, useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
@@ -15,21 +15,24 @@ export default function Signup() {
     const [confirmPass, setConfirmPass] = useState("");
     const Navigate = useNavigate();
 
+    const baseurl = import.meta.env.VITE_BASE_URL;
+
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if(userPass!=confirmPass){
+        if (userPass != confirmPass) {
             toast.error("Password Mismatch");
             return;
         }
 
-        if(userName.length < 5){
+        if (userName.length < 5) {
             toast.error("Min 5 characters needed in Username");
             return;
         }
-        
-        if(userPass.length < 7){
+
+        if (userPass.length < 7) {
             toast.error("Min 7 characters needed in Password");
             return;
         }
@@ -41,7 +44,7 @@ export default function Signup() {
 
         try {
             const response = await fetch(
-                "https://cinetrack-production-8848.up.railway.app/auth/signup",
+                `${baseurl}/auth/signup`,
                 {
                     method: "POST",
                     headers: {

@@ -16,6 +16,9 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
+    const baseurl = import.meta.env.VITE_BASE_URL;
+
+
     const {login} = useContext(AuthContext);
 
     const handleSubmit = async (e) => {
@@ -28,7 +31,7 @@ export default function Login() {
 
         try {
             const response = await fetch(
-                "https://cinetrack-production-8848.up.railway.app/auth/login",
+                `${baseurl}/auth/login`,
                 {
                     method: "POST",
                     headers: {

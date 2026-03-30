@@ -14,6 +14,8 @@ const Reviews = () => {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const baseurl = import.meta.env.VITE_BASE_URL;
+
   const isLiked = false;
   const navigate = useNavigate();
 
@@ -24,7 +26,7 @@ const Reviews = () => {
     const token = localStorage.getItem('token');
 
     const fetchReview = async () => {
-      const url = `https://cinetrack-production-8848.up.railway.app/review/${imdbId}`;
+      const url = `${baseurl}/review/${imdbId}`;
 
       try {
         setIsLoading(true);

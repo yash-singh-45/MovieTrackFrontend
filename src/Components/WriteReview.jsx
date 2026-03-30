@@ -16,6 +16,8 @@ const WriteReview = () => {
     const [reviewBody, setReviewBody] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const baseurl = import.meta.env.VITE_BASE_URL;
+
     const movieTitle = state?.movie?.title || "Movie";
 
     const handleSubmit = async (e) => {
@@ -42,7 +44,7 @@ const WriteReview = () => {
         }
 
         try {
-            const response = await fetch("https://cinetrack-production-8848.up.railway.app/review", {
+            const response = await fetch(`${baseurl}/review`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

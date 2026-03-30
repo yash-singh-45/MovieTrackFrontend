@@ -7,6 +7,8 @@ const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const baseurl = import.meta.env.VITE_BASE_URL;
+
     useEffect(() => {
 
         const getProfile = async () => {
@@ -22,7 +24,7 @@ const AuthProvider = ({ children }) => {
             }
 
             try {
-                const response = await fetch(`https://cinetrack-production-8848.up.railway.app/api/users/${userId}`, {
+                const response = await fetch(`${baseurl}/api/users/${userId}`, {
                     headers: {
                         "Authorization": `Bearer ${token}`,
                         "Content-Type": "application/json"
