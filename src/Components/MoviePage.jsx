@@ -30,6 +30,8 @@ export default function MoviePage() {
   // const [watchLoading, setWatchLoading] = useState(false);
   const [embedUrl, setEmbedUrl] = useState(null);
 
+  const baseurl = import.meta.env.VITE_BASE_URL;
+
 
   const navigate = useNavigate();
 
@@ -363,10 +365,14 @@ Return only in JSON:
     if (!imdbId) return;
 
     try {
-      const trailerUrl = `https://imdb.iamidiotareyoutoo.com/media/${imdbId}`;
-      setEmbedUrl(trailerUrl); // directly embed
+      const response = await fetch(`${baseurl}/movies/trailer/${imdbId}`);
+      if (!response.ok) {
+        throw new Error("Trailer not found");
+      }
+
+      const data = await response.json();
+      setEmbedUrl(data.trailerUrl);
     } catch (err) {
-      // console.error(err);
       toast.error("Failed to load trailer");
     }
   }
