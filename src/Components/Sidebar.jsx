@@ -54,7 +54,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         </button>
 
                         <button
-                            onClick={() => handleNavigation("/favorites")}
+                            // onClick={() => handleNavigation("/favorites")}
                             className="cursor-pointer flex items-center gap-3 text-base md:text-lg hover:text-yellow-400 transition"
                         >
                             <Heart size={20} /> Favorites
