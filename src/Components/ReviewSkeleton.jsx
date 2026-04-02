@@ -72,7 +72,6 @@ const ReviewSkeleton = () => {
         <div className="flex flex-col gap-2">
           <ReviewCardSkeleton lines={4} titleWidth="55%" />
           <ReviewCardSkeleton lines={3} titleWidth="40%" />
-          <ReviewCardSkeleton lines={4} titleWidth="62%" />
         </div>
 
       </div>
