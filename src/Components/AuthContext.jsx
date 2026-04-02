@@ -32,10 +32,10 @@ const AuthProvider = ({ children }) => {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data);
                     setUser(data);
                 } else {
-                    localStorage.clear();
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("userId");
                 }
             } catch (err) {
                 console.error("Profile fetch error:", err);
@@ -54,9 +54,9 @@ const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-    localStorage.clear();
-    setUser(null);
-  };
+        localStorage.clear();
+        setUser(null);
+    };
 
 
     return (

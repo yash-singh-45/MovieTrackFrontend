@@ -15,6 +15,7 @@ export default function Login() {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const baseurl = import.meta.env.VITE_BASE_URL;
 
@@ -30,6 +31,8 @@ export default function Login() {
         };
 
         try {
+            setIsSubmitting(true);
+
             const response = await fetch(
                 `${baseurl}/auth/login`,
                 {
@@ -51,11 +54,13 @@ export default function Login() {
                 navigate("/");
 
             } else {
-                toast.error(data.message || "Invalid Email or Password");
+                toast.error(data.message || "Invalid Username or Password");
             }
         } catch (error) {
             toast.error("Could not connect to the server.");
             console.error("Login error:", error);
+        }finally{
+            setIsSubmitting(false);
         }
     };
 
@@ -109,8 +114,18 @@ export default function Login() {
                         <a href="#" className="font-semibold text-teal-400 hover:underline">Forgot Password?</a>
                     </div>
 
-                    <button type="submit" className="w-full py-3 md:text-xl cursor-pointer bg-teal-400 text-gray-900 font-bold rounded-lg hover:bg-teal-500 transition-colors">
-                        Sign In
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full bg-teal-500 hover:opacity-80 disabled:bg-gray-700 text-black font-bold py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-yellow-500/5"
+                    >
+                        {isSubmitting ? (
+                            <div className="h-5 w-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <span className="text-sm sm:text-base uppercase">Log In</span>
+                            </>
+                        )}
                     </button>
                 </form>
 

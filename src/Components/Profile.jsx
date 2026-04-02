@@ -7,19 +7,20 @@ import { AuthContext } from './AuthContext';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user , loading } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
   useEffect(() => {
-    if (!loading && !user) {
-      toast.error("User not logged in");
+    if (loading) return;
+
+    if (!user) {
+      toast.error("Session expired. Please log in again.");
       navigate("/");
-      return;
     }
   }, [user, loading, navigate]);
 
   if (loading) return <ProfileSkeleton />;
 
-  if (!user) return null;
+  if (!user) return <ProfileSkeleton />;
 
   const userData = user;
 
@@ -87,7 +88,7 @@ const Profile = () => {
 
       {/* Recently Watched */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4">Rently Watched</h3>
+        <h3 className="text-xl font-semibold mb-4">Recently Watched</h3>
         <div className="flex flex-wrap gap-2">
           {["Sci-Fi", "Drama", "Action", "Comedy", "Thriller", "Fantasy"].map((genre, idx) => (
             <span

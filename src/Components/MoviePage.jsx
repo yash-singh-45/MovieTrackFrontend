@@ -21,6 +21,7 @@ export default function MoviePage() {
 
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const { media, imdbId } = useParams(); // get movie name from URL
+  const [trailerLoading, setTrailerLoading] = useState(false);
 
   const [movie, setMovie] = useState(null);
   const [inWatchlist, setInWatchlist] = useState(false);
@@ -31,6 +32,7 @@ export default function MoviePage() {
   const [embedUrl, setEmbedUrl] = useState(null);
 
   const baseurl = import.meta.env.VITE_BASE_URL;
+
 
 
   const navigate = useNavigate();
@@ -365,6 +367,7 @@ Return only in JSON:
     if (!imdbId) return;
 
     try {
+      setTrailerLoading(true);
       const response = await fetch(`${baseurl}/movies/trailer/${imdbId}`);
       if (!response.ok) {
         throw new Error("Trailer not found");
@@ -374,6 +377,8 @@ Return only in JSON:
       setEmbedUrl(data.trailerUrl);
     } catch (err) {
       toast.error("Failed to load trailer");
+    } finally {
+      setTrailerLoading(false);
     }
   }
 
@@ -461,17 +466,25 @@ Return only in JSON:
                 </div>
               </div>
 
+              {/* TRAILER */}
               <div className="flex items-center gap-3 mt-4">
                 <div className="flex gap-3 text-sm md:text-sm lg:text-lg md:ml-5">
                   <button
                     onClick={() => handleWatchTrailer(imdbId)}
-                    className="cursor-pointer md:px-4 md:py-2 px-3 py-2 bg-teal-500/95 rounded-full font-medium shadow-md hover:scale-[1.01] transition"
+                    className="cursor-pointer md:px-4 md:py-2 px-3 py-2 bg-teal-500/95 rounded-full font-medium shadow-md hover:scale-[1.01] transition flex items-center gap-2"
+                    disabled={trailerLoading}
                   >
-                    ▶ Watch Trailer
+                    {trailerLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      "▶ Watch Trailer"
+                    )}
                   </button>
                 </div>
               </div>
-
               {embedUrl && (
                 <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50 p-4">
                   <div className="relative w-full max-w-3xl aspect-video rounded-lg overflow-hidden shadow-2xl">

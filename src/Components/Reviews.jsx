@@ -1,9 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import likepng from '../assets/like.png';
 import { AuthContext } from './AuthContext';
 import { ThumbsUp } from 'lucide-react';
+import ReviewSkeleton from './ReviewSkeleton';
+import { MessageSquare } from 'lucide-react';
 
 
 const Reviews = () => {
@@ -33,7 +34,6 @@ const Reviews = () => {
         const response = await fetch(url);
 
         const data = await response.json();
-        console.log(data);
 
         if (response.ok) {
           setReviews(data);
@@ -60,7 +60,7 @@ const Reviews = () => {
     navigate("write-review", { state: { movie } });
   }
 
-
+  if(isLoading) return <ReviewSkeleton />
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-[#f5f5f5] py-6 sm:py-10 md:py-20 px-4 sm:px-[5%]">
@@ -109,7 +109,7 @@ const Reviews = () => {
           {
             (!reviews || reviews.length == 0) ? (
               <div className="flex flex-col items-center justify-center py-10 md:py-20 pb-10 md:pb-20 bg-white/[0.02] rounded-lg border border-dashed border-white/10">
-                <span className="text-4xl mb-4">💬</span>
+                <span className="text-4xl mb-4"><MessageSquare size={48} className="text-gray-600 mb-4 stroke-[1.5px]" /></span>
                 <p className="text-gray-500 font-medium">No reviews yet. Be the first to write one!</p>
               </div>
 

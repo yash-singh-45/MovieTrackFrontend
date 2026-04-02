@@ -18,21 +18,24 @@ const Actors = () => {
     const { role, name } = useParams();
     const aName = name;
 
-    // console.log("Name", aName)
+    const [isLoading, setIsLoading] = useState(true);
+
     async function getOverview(name) {
-        const encodeName = name;
-        const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeName}`)
-        const data = await res.json();
+        setIsLoading(true);
 
-        // console.log("data", data)
+        try {
+            const encodeName = name;
+            const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeName}`)
+            const data = await res.json();
 
-        const wikidataId = data.wikibase_item
 
-        setOverview(data);
+            const wikidataId = data.wikibase_item
 
-        if (!wikidataId || wikidataId.length == 0) return;
+            setOverview(data);
 
-        const query = `
+            if (!wikidataId || wikidataId.length == 0) return;
+
+            const query = `
     SELECT ?filmLabel WHERE {
       ?film wdt:${role == 'actor' ? 'P161' : 'P57'} wd:${wikidataId}.
       ?film wikibase:sitelinks ?sitelinks.
@@ -42,53 +45,58 @@ const Actors = () => {
     LIMIT 60
     `;
 
-        const wdUrl = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
+            const wdUrl = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
 
 
-        const wdRes = await fetch(wdUrl, {
-            headers: {
-                "Accept": "application/sparql+json"
-            }
-        });
-
-        const wdData = await wdRes.json();
-
-        setTotalFilms(wdData.results.bindings.length);
-        const films = await Promise.all(
-            wdData.results.bindings.slice(0, visibleCount).map(async (item) => {
-                const title = item.filmLabel.value;
-
-                try {
-                    const omdbRes = await fetch(
-                        `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbapi}`
-                    );
-
-                    const omdbData = await omdbRes.json();
-
-                    return {
-                        title: omdbData.Title || title,
-                        actor: omdbData.Actors,
-                        director: omdbData.Director,
-                        genre: omdbData.Genre,
-                        image: omdbData.Poster,
-                        rating: omdbData.imdbRating,
-                        imdbId: omdbData.imdbID || omdbData.imdbId,
-                        votes: omdbData.imdbVotes
-                            ? Number(omdbData.imdbVotes.replace(/,/g, ""))
-                            : 0,
-                        media_type: omdbData.Type,
-                        year: omdbData.Year || omdbData.year
-                    };
+            const wdRes = await fetch(wdUrl, {
+                headers: {
+                    "Accept": "application/sparql+json"
                 }
-                catch {
-                    return {
-                        title,
-                        data: null
+            });
+
+            const wdData = await wdRes.json();
+
+            setTotalFilms(wdData.results.bindings.length);
+            const films = await Promise.all(
+                wdData.results.bindings.slice(0, visibleCount).map(async (item) => {
+                    const title = item.filmLabel.value;
+
+                    try {
+                        const omdbRes = await fetch(
+                            `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${omdbapi}`
+                        );
+
+                        const omdbData = await omdbRes.json();
+
+                        return {
+                            title: omdbData.Title || title,
+                            actor: omdbData.Actors,
+                            director: omdbData.Director,
+                            genre: omdbData.Genre,
+                            image: omdbData.Poster,
+                            rating: omdbData.imdbRating,
+                            imdbId: omdbData.imdbID || omdbData.imdbId,
+                            votes: omdbData.imdbVotes
+                                ? Number(omdbData.imdbVotes.replace(/,/g, ""))
+                                : 0,
+                            media_type: omdbData.Type,
+                            year: omdbData.Year || omdbData.year
+                        };
                     }
-                }
-            })
-        )
-        setFilmData(films);
+                    catch {
+                        return {
+                            title,
+                            data: null
+                        }
+                    }
+                })
+            )
+            setFilmData(films);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);  
+        }
     }
 
     const visibleCount = showAll ? totalFilms : 12;
@@ -97,24 +105,25 @@ const Actors = () => {
         getOverview(aName);
     }, [aName, visibleCount])
 
+
     useEffect(() => {
 
-    if (!filmData.length) return;
+        if (!filmData.length) return;
 
-    const field = role === "actor" ? "actor" : "director";
+        const field = role === "actor" ? "actor" : "director";
 
-    const filtered = filmData.filter(movie => {
-        if (!movie[field] || movie[field] === "N/A") return false;
+        const filtered = filmData.filter(movie => {
+            if (!movie[field] || movie[field] === "N/A") return false;
 
-        return movie[field]
-            .split(',')
-            .map(a => a.trim().toLowerCase())
-            .includes(aName.toLowerCase());
-    });
+            return movie[field]
+                .split(',')
+                .map(a => a.trim().toLowerCase())
+                .includes(aName.toLowerCase());
+        });
 
-    setData(filtered);
+        setData(filtered);
 
-}, [filmData]);
+    }, [filmData]);
 
 
     function handleSortChange(e) {
@@ -138,7 +147,8 @@ const Actors = () => {
         setData(sorted);
     }
 
-    if (!overview || !data) return <p className=''>Loading Actors info.....</p>
+    if (isLoading) return <ActorsSkeleton />;
+
     return (
         <div className='bg-[#0F1115] min-h-screen font-sans sm:p-2 lg:p-5 text-white overflow-hidden'>
 
@@ -229,3 +239,53 @@ function MovieCard({ movie, navigate }) {
     );
 
 }
+
+
+const ActorsSkeleton = () => {
+    return (
+        <div className='bg-[#0F1115] min-h-screen font-sans sm:p-2 lg:p-5 text-white overflow-hidden animate-pulse'>
+
+            {/* Header Skeleton */}
+            <div className='flex flex-col md:flex-row px-4 py-4 md:px-4 lg:px-10 md:py-5 mt-1 md:mt-2 gap-6'>
+                {/* Avatar Skeleton */}
+                <div className='w-full md:w-1/3 flex justify-center md:justify-start'>
+                    <div className='bg-gray-800 rounded-full w-50 h-50 md:w-60 md:h-60 lg:w-80 lg:h-80 border-2 border-gray-700' />
+                </div>
+
+                {/* Info Box Skeleton */}
+                <div className="w-full md:w-2/3 bg-[#1E1E23] rounded-2xl p-3 md:px-8 flex flex-col justify-center gap-4">
+                    <div className="h-10 md:h-12 bg-gray-800 rounded-lg w-3/4" />
+                    <div className="space-y-2">
+                        <div className="h-4 bg-gray-800 rounded w-full" />
+                        <div className="h-4 bg-gray-800 rounded w-[95%]" />
+                        <div className="h-4 bg-gray-800 rounded w-[90%]" />
+                        <div className="h-4 bg-gray-800 rounded w-[40%]" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Filmography Container Skeleton */}
+            <div className='mx-4 mt-5 mb-2 md:mx-4 md:mt-15 lg:mx-10 lg:mt-20 bg-[#1E1E23] shadow-2xl rounded-2xl p-1.5 md:px-5 md:py-2'>
+
+                {/* Title and Sort Bar */}
+                <div className='my-1 md:my-2 flex justify-between items-center'>
+                    <div className='h-10 bg-gray-800 rounded w-48' />
+                    <div className='h-8 bg-gray-800 rounded-2xl w-32 mr-1 md:mr-5' />
+                </div>
+
+                {/* Movie Grid Skeleton */}
+                <div className="grid grid-cols-3 my-5 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="bg-[#1A1C22] border border-gray-800 rounded-lg overflow-hidden">
+                            <div className="w-full aspect-square bg-gray-800" />
+                            <div className="md:p-3 p-1">
+                                <div className="h-3 bg-gray-800 rounded w-3/4 mb-1" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+        </div>
+    );
+};
