@@ -24,10 +24,6 @@ CineTrack is a full-stack movie & TV show discovery platform where users can bro
 | UI/UX | Lucide React (icons), React Hot Toast (notifications) |
 | Auth | JWT-based, integrated with the Spring Boot backend |
 
-## 📸 Screenshots
-
-> _Add 2–3 screenshots or a short GIF here — homepage, a movie detail page, and the review section make the biggest impact._
-
 ## 🚀 Running Locally
 
 ```bash
