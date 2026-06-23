@@ -8,7 +8,8 @@ import { AuthContext } from './AuthContext';
 const Profile = () => {
   const navigate = useNavigate();
   const { user, loading } = useContext(AuthContext);
-
+  
+  console.log(user);
   useEffect(() => {
     if (loading) return;
     

@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import toast from 'react-hot-toast';
+import { Skeleton } from './Skeleton';
 const WatchList = () => {
 
   const navigate = useNavigate();
@@ -9,11 +10,11 @@ const WatchList = () => {
   const { user } = useContext(AuthContext);
   const baseurl = import.meta.env.VITE_BASE_URL;
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
 
     async function getWatchList() {
-
-
       const token = localStorage.getItem('token');
 
       if (!user || !token) {
@@ -25,6 +26,7 @@ const WatchList = () => {
       }
 
       try {
+        setLoading(true);
         const response = await fetch(`${baseurl}/list/watchlist/get`, {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -38,11 +40,15 @@ const WatchList = () => {
 
       } catch (err) {
         toast.error("Error fetching Watchlist");
+      } finally{
+        setLoading(false);
       }
     }
 
     getWatchList();
   }, [user])
+
+  if(loading) return <Skeleton />
 
   if (watchList.length === 0) {
     return (

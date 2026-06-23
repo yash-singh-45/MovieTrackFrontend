@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import toast from 'react-hot-toast';
+import { Skeleton } from './Skeleton';
 
 const Favourites = () => {
 
@@ -9,12 +10,11 @@ const Favourites = () => {
   const [favourites, setFavourites] = useState([]);
   const { user } = useContext(AuthContext);
   const baseurl = import.meta.env.VITE_BASE_URL;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
 
     async function getFavs() {
-
-
       const token = localStorage.getItem('token');
 
       if (!user || !token) {
@@ -26,6 +26,7 @@ const Favourites = () => {
       }
 
       try {
+        setLoading(true);
         const response = await fetch(`${baseurl}/list/favourites/get`, {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -39,12 +40,16 @@ const Favourites = () => {
 
       } catch (err) {
         toast.error("Error fetching Favs");
+      } finally{
+        setLoading(false);
       }
     }
 
     getFavs();
   }, [user])
 
+  if(loading) return <Skeleton />
+  
   if (favourites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F1117] text-white px-4">

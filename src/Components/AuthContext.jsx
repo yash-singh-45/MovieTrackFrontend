@@ -54,7 +54,6 @@ const AuthProvider = ({ children }) => {
         localStorage.setItem("userId", data.userId);
 
         await getProfile();
-        setUser(data.user || { id: data.userId });
     };
 
     const logout = () => {
