@@ -5,14 +5,14 @@ import { AuthContext } from "./AuthContext";
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
-    const {user, logout} = useContext(AuthContext);
-    
+    const { user, logout } = useContext(AuthContext);
+
     const handleNavigation = (path) => {
         navigate(path);
         onClose();
     };
 
-    const handleLogout = () =>{
+    const handleLogout = () => {
         logout();
         onClose();
     }
@@ -39,26 +39,34 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {/* Profile Section (Only if Logged In) */}
                         {user && (
                             <button
-                                onClick={() => handleNavigation("/profile")}
+                                onClick={() => handleNavigation(`/u/${user.username}`)}
                                 className="cursor-pointer flex items-center gap-3 text-base md:text-lg text-[#00FFD1] hover:opacity-80 transition"
                             >
                                 <User size={20} /> My Profile
                             </button>
                         )}
 
-                        <button
-                            onClick={() => handleNavigation("/watchlist")}
-                            className="cursor-pointer flex items-center gap-3 text-base md:text-lg hover:text-red-400 transition"
-                        >
-                            <Bookmark size={20} /> Watchlist
-                        </button>
+                        {
+                            user && (
+                                <button
+                                    onClick={() => handleNavigation("/watchlist")}
+                                    className="cursor-pointer flex items-center gap-3 text-base md:text-lg hover:text-red-400 transition"
+                                >
+                                    <Bookmark size={20} /> Watchlist
+                                </button>
+                            )
+                        }
 
-                        <button
-                            // onClick={() => handleNavigation("/favorites")}
-                            className="cursor-pointer flex items-center gap-3 text-base md:text-lg hover:text-yellow-400 transition"
-                        >
-                            <Heart size={20} /> Favorites
-                        </button>
+                        {
+                            user && (
+                                <button
+                                    onClick={() => handleNavigation("/favourites")}
+                                    className="cursor-pointer flex items-center gap-3 text-base md:text-lg hover:text-yellow-400 transition"
+                                >
+                                    <Heart size={20} /> Favorites
+                                </button>
+                            )
+                        }
                     </nav>
 
                     {/* Bottom Action Button */}

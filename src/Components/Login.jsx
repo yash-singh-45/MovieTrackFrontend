@@ -50,8 +50,9 @@ export default function Login() {
                 login(data);
 
                 toast.success("Login Successful!");
-
-                navigate("/");
+                navigate("/", {
+                    replace: true
+                });
 
             } else {
                 toast.error(data.message || "Invalid Username or Password");

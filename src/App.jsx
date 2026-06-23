@@ -12,6 +12,7 @@ import WatchList from "./Components/WatchList";
 import Actors from "./Components/Actors";
 import Reviews from "./Components/Reviews";
 import WriteReview from "./Components/WriteReview";
+import Favourites from "./Components/Favourites";
 
 const router = createBrowserRouter([
   {
@@ -27,7 +28,7 @@ const router = createBrowserRouter([
     element: <Home />
   },
   {
-    path: "/profile",
+    path: "/u/:username",
     element: <Profile />
   },
   {
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
   {
     path: "/watchlist",
     element: <WatchList />
+  },
+  {
+    path: "/favourites",
+    element: <Favourites />
   },
   {
     path: "/bio/:role/:name",

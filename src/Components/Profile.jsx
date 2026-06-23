@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { replace, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProfileSkeleton from './ProfileSkeleton';
 import { AuthContext } from './AuthContext';
@@ -11,16 +11,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (loading) return;
-
+    
     if (!user) {
       toast.error("Session expired. Please log in again.");
-      navigate("/");
+      navigate("/", {
+        replace:true
+      });
     }
   }, [user, loading, navigate]);
 
   if (loading) return <ProfileSkeleton />;
-
-  if (!user) return <ProfileSkeleton />;
 
   const userData = user;
 
@@ -30,7 +30,7 @@ const Profile = () => {
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-white text-black font-bold text-2xl w-16 h-16 flex items-center justify-center rounded-full border-4 border-[#00FFD1]">
-            JD
+            <img className='h-15 w-15' src={"https://avatarapi.runflare.run/public/boy"} alt="" />
           </div>
           <div>
             <h2 className="text-2xl font-semibold">{userData.username}</h2>

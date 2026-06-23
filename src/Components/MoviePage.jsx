@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,8 @@ import jiocinema from '/src/assets/Jio_cinema_logo.png'
 import appletv from '/src/assets/apple-tv.jpg'
 import lionsgate from '/src/assets/lionsgate_logo.png'
 import sunnxt from '/src/assets/sunnxt_logo.png'
+import { AuthContext } from "./AuthContext";
+import { Heart, HeartCrack, HeartIcon, HeartOff } from "lucide-react";
 
 const tmdbApi = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -24,7 +26,6 @@ export default function MoviePage() {
   const [trailerLoading, setTrailerLoading] = useState(false);
 
   const [movie, setMovie] = useState(null);
-  const [inWatchlist, setInWatchlist] = useState(false);
   const [similarMovies, setSimilarMovies] = useState([]);
 
   const [watchProviders, setWatchProviders] = useState([]);
@@ -33,10 +34,12 @@ export default function MoviePage() {
 
   const baseurl = import.meta.env.VITE_BASE_URL;
 
-
+  const [inWatchlist, setInWatchlist] = useState(false);
+  const [inFavourite, setInFavourite] = useState(false);
 
   const navigate = useNavigate();
 
+  const { user } = useContext(AuthContext);
 
   async function getSimilarMoviesGemini(movieTitle, media) {
     const prompt = `Suggest 6 ${media === 'movie' ? 'movies' : 'web series'} similar to "${movieTitle}".
@@ -220,16 +223,44 @@ Return only in JSON:
         setMovie({ Response: "False" });
       }
     }
-    fetchMovie();
 
 
-    const watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+    //FUNCTION TO CHECK MOVIE IS IN WATCHLIST OF USER
+    async function checkMovie(imdbId) {
 
-    const exists = watchlist.find((m) => m.imdbId === imdbId);
+      if (!imdbId) return;
 
-    if (exists) {
-      setInWatchlist(true);
+      const token = localStorage.getItem("token");
+
+      if (!token || !user) {
+        setInWatchlist(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseurl}/list/check/${imdbId}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        setInWatchlist(result.watchlist);
+        setInFavourite(result.favourite);
+
+      } catch (err) {
+        console.log("Error:", err);
+        setInWatchlist(false);
+        setInFavourite(false);
+      }
+
     }
+
+    fetchMovie();
+    checkMovie(movie?.imdbId || movie?.imdbID || imdbId);
 
   }, [imdbId]);
 
@@ -382,35 +413,86 @@ Return only in JSON:
     }
   }
 
+  async function handleAddToWatchlist() {
 
-  function handleAddToWatchlist() {
-    const watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+    if (inWatchlist === true) return;
 
-    const exists = watchlist.find((m) => m.imdbId === movie.imdbId);
-    if (exists) {
-      toast.error("Movie already in Watchlist");
+    const token = localStorage.getItem("token");
+
+    if (!movie) return;
+
+    if (!user || !token) {
+      toast.error("Login to add movies to watchlist!!");
       return;
     }
 
-    localStorage.setItem("watchlist", JSON.stringify([...watchlist, movie]));
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
 
-    setInWatchlist(true);
-    toast.success("Added to Watchlist 🎬");
+    const data = {
+      imdbId: imdbIdFinal,
+      title: movie.title,
+      posterPath: movie.poster,
+      rating: movie.rating
+    }
+
+    try {
+      const response = await fetch(`${baseurl}/list/watchlist/add`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.text();
+      console.log(result);
+      toast.success(result);
+      setInWatchlist(true);
+    } catch (err) {
+      toast.error("Error adding to watchlist");
+      console.error("Error adding to watchlist:", err);
+    }
   }
 
-  function handleRemoveFromWatchlist() {
-    const watchlist = JSON.parse(localStorage.getItem("watchlist")) || [];
+  async function handleRemoveFromWatchlist() {
 
-    if (watchlist.length === 0) {
-      toast.error("Watchlist is empty");
-      return;
+    if (inWatchlist === false) return;
+
+    const token = localStorage.getItem("token");
+
+    console.log("Remove Watchlist call");
+
+    if (!movie || !user || !token) return;
+
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
+
+    try {
+      const response = await fetch(`${baseurl}/list/watchlist/remove`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: imdbIdFinal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(result);
+      toast.success("Removed from Watchlist");
+      setInWatchlist(false);
+    } catch (err) {
+      toast.error("Error removing from watchlist");
+      console.error("Error removing from to watchlist:", err);
     }
-
-    const newWatchlist = watchlist.filter((m) => m.imdbId !== movie.imdbId);
-    localStorage.setItem("watchlist", JSON.stringify(newWatchlist));
-
-    setInWatchlist(false);
-    toast.success("Removed from Watchlist");
   }
 
   function handleActorClick(name) {
@@ -423,6 +505,92 @@ Return only in JSON:
     const encoded_name = encodeURIComponent(name);
 
     navigate(`/bio/director/${encoded_name}`)
+  }
+
+  //Function to add to Favs
+  async function addToFavourite() {
+
+    if (inFavourite === true) return;
+
+    const token = localStorage.getItem("token");
+
+    if (!movie) return;
+
+    if (!user || !token) {
+      toast.error("Login to add movies to Favourites!!");
+      return;
+    }
+
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
+
+    const data = {
+      imdbId: imdbIdFinal,
+      title: movie.title,
+      posterPath: movie.poster,
+      rating: movie.rating
+    }
+
+    try {
+      const response = await fetch(`${baseurl}/list/favourites/add`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.text();
+      console.log(result);
+      toast.success(result);
+      setInFavourite(true);
+    } catch (err) {
+      toast.error("Error adding to favourites");
+      console.error("Error adding to favourites:", err);
+    }
+  }
+
+  //Function to remove from Favs
+  async function removeFavourite() {
+    if (inFavourite === false) return;
+
+    const token = localStorage.getItem("token");
+
+    if (!movie) return;
+
+    if (!user || !token) {
+      toast.error("Login to remove from favourites!!");
+      return;
+    }
+
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
+
+    try {
+      const response = await fetch(`${baseurl}/list/favourites/remove`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: imdbIdFinal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(result);
+      toast.success("Removed from favourites");
+      setInFavourite(false);
+    } catch (err) {
+      toast.error("Error removing from favourites");
+      console.error("Error removing from to favourites:", err);
+    }
   }
 
   return (
@@ -448,7 +616,6 @@ Return only in JSON:
             <div className="flex-1">
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">{movie.title}</h1>
               <p className="text-gray-300 mt-1">{movie.tagline}</p>
-
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <span className="text-sm md:text-base lg:text-lg text-gray-400">{movie.year}</span>
                 <span className="text-sm md:text-base lg:text-lg text-gray-400">•</span>
@@ -508,19 +675,21 @@ Return only in JSON:
                 </div>
               )}
 
-
-
               <div className="flex items-center gap-3 mt-4">
-                <div className="flex gap-3 text-sm md:text-sm lg:text-lg md:ml-5">
+                <div className="flex w-full md:w-2/3 text-sm md:text-sm items-center justify-between lg:text-lg md:ml-5">
                   <button
                     onClick={inWatchlist ? handleRemoveFromWatchlist : handleAddToWatchlist}
                     className="md:px-4 md:py-2 px-3 py-2 bg-transparent border border-teal-400 text-teal-400 rounded-full font-medium shadow-md hover:bg-teal-500/20 transition"
                   >
                     {inWatchlist ? "❌ Remove from Watchlist" : "➕ Add to Watchlist"}
                   </button>
+
+
+                  <button onClick={inFavourite ? removeFavourite : addToFavourite} className=" hover:cursor-pointer">
+                    <Heart className={`h-10 w-10 md:h-12 md:w-12 ${inFavourite ? "fill-red-600" : ""}`} />
+                  </button>
                 </div>
               </div>
-
 
               {/* Controls */}
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">

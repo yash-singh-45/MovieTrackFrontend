@@ -2,16 +2,17 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import toast from 'react-hot-toast';
-const WatchList = () => {
+
+const Favourites = () => {
 
   const navigate = useNavigate();
-  const [watchList, setWatchList] = useState([]);
+  const [favourites, setFavourites] = useState([]);
   const { user } = useContext(AuthContext);
   const baseurl = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
 
-    async function getWatchList() {
+    async function getFavs() {
 
 
       const token = localStorage.getItem('token');
@@ -25,7 +26,7 @@ const WatchList = () => {
       }
 
       try {
-        const response = await fetch(`${baseurl}/list/watchlist/get`, {
+        const response = await fetch(`${baseurl}/list/favourites/get`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -34,17 +35,17 @@ const WatchList = () => {
 
         const result = await response.json();
         console.log(result);
-        setWatchList(result);
+        setFavourites(result);
 
       } catch (err) {
-        toast.error("Error fetching Watchlist");
+        toast.error("Error fetching Favs");
       }
     }
 
-    getWatchList();
+    getFavs();
   }, [user])
 
-  if (watchList.length === 0) {
+  if (favourites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F1117] text-white px-4">
         <svg
@@ -60,9 +61,9 @@ const WatchList = () => {
             d="M3 3h18v18H3V3z M9 9h6v6H9V9z"
           />
         </svg>
-        <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-2">Your WatchList is Empty</h2>
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-2">Your don't have any Favourites</h2>
         <p className="text-gray-400 mb-6 text-center text-lg md:text-xl lg:text-2xl">
-          Add movies to your WatchList and they’ll show up here. 🎬
+          Add movies to your Favourites and they’ll show up here. 🎬
         </p>
         <button
           onClick={() => window.location.href = '/'} // navigate to home or movies page
@@ -81,13 +82,13 @@ const WatchList = () => {
 
       <div className="mb-6">
         <h2 className="text-2xl font-semibold">
-          WatchList
+          Favourites
         </h2>
-        <p className="text-gray-400">Showing {watchList.length} movies</p>
+        <p className="text-gray-400">Showing {favourites.length} movies</p>
       </div>
 
       <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-6">
-        {watchList.map((movie) => (
+        {favourites.map((movie) => (
           <MovieCard key={movie.imdbId} movie={movie} navigate={navigate} />
         ))}
       </div>
@@ -95,7 +96,7 @@ const WatchList = () => {
   )
 }
 
-export default WatchList
+export default Favourites;
 
 function MovieCard({ movie, navigate }) {
 
