@@ -13,6 +13,7 @@ import Actors from "./Components/Actors";
 import Reviews from "./Components/Reviews";
 import WriteReview from "./Components/WriteReview";
 import Favourites from "./Components/Favourites";
+import Collections from "./Components/Collections";
 
 const router = createBrowserRouter([
   {
@@ -62,6 +63,10 @@ const router = createBrowserRouter([
   {
     path: "/reviews/:imdbId/write-review",
     element: <WriteReview />
+  },
+  {
+    path:"/collections/:publicId",
+    element: <Collections />
   }
 ]);
 

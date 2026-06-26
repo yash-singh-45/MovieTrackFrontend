@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,8 @@ import appletv from '/src/assets/apple-tv.jpg'
 import lionsgate from '/src/assets/lionsgate_logo.png'
 import sunnxt from '/src/assets/sunnxt_logo.png'
 import { AuthContext } from "./AuthContext";
-import { Heart, HeartCrack, HeartIcon, HeartOff } from "lucide-react";
+import { Heart, HeartCrack, HeartIcon, HeartOff, X } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 const tmdbApi = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -36,6 +37,12 @@ export default function MoviePage() {
 
   const [inWatchlist, setInWatchlist] = useState(false);
   const [inFavourite, setInFavourite] = useState(false);
+
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreOpenRef = useRef(null);
+
+  const [addToCollectionOpen, setAddtoCollectionOpen] = useState(false);
+  const [collections, setCollections] = useState([]);
 
   const navigate = useNavigate();
 
@@ -264,6 +271,26 @@ Return only in JSON:
 
   }, [imdbId]);
 
+  // UseEffect to handle openCollectionMenu
+  useEffect(() => {
+    if (moreOpen === false) return;
+
+    const handleClickOutside = (e) => {
+      if (moreOpenRef.current && !moreOpenRef.current.contains(e.target)) {
+        setMoreOpen(null);
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClickOutside);
+    };
+
+  }, [moreOpen])
 
   const PROVIDER_MAP = {
     // Netflix
@@ -593,11 +620,133 @@ Return only in JSON:
     }
   }
 
+
+  //Function to get collection of user
+  async function getCollections() {
+
+    const token = localStorage.getItem('token');
+
+    if (!token || !user) {
+      toast.error("You are not logged in!!");
+      return;
+    }
+
+    if (!imdbId || !movie) return;
+
+    try {
+      const response = await fetch(`${baseurl}/collection/get`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        }
+      });
+
+      const result = await response.json();
+
+      setCollections(result);
+    } catch (error) {
+      toast.error("Error fetching user's collection!");
+      console.log("Error:", error);
+    }
+  }
+
+  // Function to add to Collection
+  async function handleAddToCollection() {
+    await getCollections();
+    setMoreOpen(false);
+    setAddtoCollectionOpen(true);
+  }
+
+  async function handleAddMovieToCollection(collection) {
+    const token = localStorage.getItem('token');
+
+    if (!token || !user) {
+      toast.error("You are not logged in !!");
+      return;
+    }
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
+    const requestDto = {
+      "imdbId": imdbIdFinal,
+      "collectionId": collection.id,
+      "title": movie.title,
+      "posterPath": movie.poster,
+      "rating": movie.rating
+    }
+
+    try {
+      const response = await fetch(`${baseurl}/collectionmovie/add`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestDto)
+      });
+
+
+      if (!response.ok) {
+        const error = await response.json();
+
+        console.log("Error:", error.error);
+        toast.error(error.error);
+        return;
+      } else {
+        const result = await response.text();
+        toast.success(result);
+      }
+    } catch (error) {
+      toast.error("Could not add movie to collection!");
+      console.log("Error:", error);
+    } finally {
+      setAddtoCollectionOpen(false);
+      setMoreOpen(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0B0B0C] text-white p-4 md:p-8 flex justify-center">
       <div className="w-full max-w-7xl">
         {/* TOP CARD */}
         <div className="relative bg-[#141518] rounded-2xl p-5 md:p-8 shadow-2xl overflow-hidden">
+
+          <button onClick={() => setMoreOpen(moreOpen ? false : true)}
+            className="absolute cursor-pointer top-2 md:top-3 right-3">
+            <MoreHorizontal />
+          </button>
+
+          {
+            moreOpen && (
+              <div ref={moreOpenRef} className="absolute top-8 z-10 right-2 w-36 rounded-lg bg-gray-800 shadow-lg border border-gray-700 ">
+                <button onClick={() => handleAddToCollection()} className=" cursor-pointer w-full text-left text-sm px-2 py-2 hover:bg-gray-700">Add to Collection</button>
+                <button className="cursor-pointer w-full text-left text-sm px-2 py-2 hover:bg-gray-700">Share Movie</button>
+              </div>
+            )
+          }
+
+          {
+            !moreOpen && addToCollectionOpen && (
+              <div className="absolute top-8 right-10 w-64 max-h-50 overflow-auto bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-20"
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                }}>
+                <button onClick={() => setAddtoCollectionOpen(false)}>
+                  <X size={15} className="right-2 absolute top-1" />
+                </button>
+                <div className="max-h-72 overflow-y-auto">
+                  {collections.map((item) => (
+                    <button
+                      key={item.id}
+                      className="w-full px-4 py-3 text-left text-white hover:bg-zinc-800 transition-colors duration-200 border-b border-zinc-800 last:border-b-0"
+                      onClick={() => handleAddMovieToCollection(item)}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-30 rounded-2xl pointer-events-none"></div>
 
           <div className="flex flex-col md:flex-row gap-6 z-10">
