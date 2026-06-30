@@ -16,18 +16,21 @@ import sunnxt from '/src/assets/sunnxt_logo.png'
 import { AuthContext } from "./AuthContext";
 import { Heart, HeartCrack, HeartIcon, HeartOff, X } from "lucide-react";
 import { MoreHorizontal } from "lucide-react";
+import MoviePageSkeleton from "./MoviePageSkeleton";
+import PageNotFound from "./PageNotFound";
 
 const tmdbApi = import.meta.env.VITE_TMDB_API_KEY;
 
 export default function MoviePage() {
   const apikey = import.meta.env.VITE_OMDB_API_KEY;
 
-  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const { media, imdbId } = useParams(); // get movie name from URL
   const [trailerLoading, setTrailerLoading] = useState(false);
 
+  const [movieNotFound, setMovieNotFound] = useState(false);
   const [movie, setMovie] = useState(null);
   const [similarMovies, setSimilarMovies] = useState([]);
+  const [loadingMovie, setLoadingMovie] = useState(true);
 
   const [watchProviders, setWatchProviders] = useState([]);
   // const [watchLoading, setWatchLoading] = useState(false);
@@ -43,192 +46,103 @@ export default function MoviePage() {
 
   const [addToCollectionOpen, setAddtoCollectionOpen] = useState(false);
   const [collections, setCollections] = useState([]);
+  const [fetchingCollections, setFetchingCollections] = useState(false);
+  const [addingMovieToCollection, setAddingMovieToCollection] = useState(false);
 
   const navigate = useNavigate();
 
   const { user } = useContext(AuthContext);
 
-  async function getSimilarMoviesGemini(movieTitle, media) {
-    const prompt = `Suggest 6 ${media === 'movie' ? 'movies' : 'web series'} similar to "${movieTitle}".
-- They should match the genre of "${movieTitle}"
-- Prefer movies from the same country/language (e.g., Indian movies if "${movieTitle}" is Indian)
-Return only in JSON:
-[
-  { "title": "", "imdbId": "" }
-]`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
-        })
-      }
-    );
+  //FUNCTION TO GET SIMILAR MOVIES
+  async function getSimilarMovies() {
 
-    const data = await res.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-
-    // Strip Markdown code fences if present
-    text = text.replace(/```json\s*|```/g, "").trim();
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
 
     try {
-      return JSON.parse(text);
-    } catch (e) {
-      // console.error("Failed to parse Gemini response:", text);
-      return [];
+      const response = await fetch(`${baseurl}/movies/similar/${imdbIdFinal}`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Error Fetching similar movies: ", error);
+        return;
+      }
+
+      const result = await response.json();
+      const data = result.results || [];
+
+      let similarData = [];
+
+      const tmdbPosterUrl = "https://image.tmdb.org/t/p/w500";
+
+      similarData = data.map((movie) => ({
+        poster: movie.poster_path
+          ? tmdbPosterUrl + movie.poster_path
+          : movie.backdrop_path
+            ? tmdbPosterUrl + movie.backdrop_path
+            : null,
+
+        title: movie.title,
+        rating: Math.round(movie.vote_average),
+        tmdb_id: movie.id
+
+      }))
+
+      setSimilarMovies(similarData);
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
 
 
 
-  async function fetchMovieDetailsFromOMDb(title, media = 'movie') {
-    const res = await fetch(`https://www.omdbapi.com/?t=${title}&type=${media}&apikey=${apikey}`);
-    const data = await res.json();
-    return data;
-  }
-
-
-  async function getDetailedSimilarMovies(movieTitle, media = 'movie') {
-    const baseList = await getSimilarMoviesGemini(movieTitle, media);
-    const detailed = await Promise.all(
-      baseList.map(async (m) => {
-        const title = m.title || m.Title;
-        const details = await fetchMovieDetailsFromOMDb(title, media);
-
-        return {
-          Title: details.Title || title,
-          Poster: details.Poster,
-          imdbRating: details.imdbRating || "N/A",
-          imdbId: m.imdbId || details.imdbID,
-          Type: details.Type ? details.Type.toLowerCase() : 'movie',
-        };
-      })
-    );
-
-    return detailed;
-  }
-
-
-
+  // MAIN USE EFFECT
   useEffect(() => {
-    setSimilarMovies([]);
 
     async function fetchMovie() {
-      const res = await fetch(
-        `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&type=${media}&apikey=${apikey}`
-      );
-      const data = await res.json();
+      try {
 
-      if (data.Response === "True") {
-        const mappedMovie = {
-          title: data.Title,
-          poster: data.Poster,
-          year: data.Year,
-          runtime: data.Runtime,
-          genres: data.Genre.split(", "),
-          synopsis: data.Plot,
-          rating: data.imdbRating,
-          cast: data.Actors.split(", ").map((name) => ({
-            name,
-            img: "/placeholder.jpg", // OMDb has no actor images
-          })),
-          gallery: [data.Poster],
-          details: {
-            director: data.Director,
-            writers: data.Writer,
-            budget: "N/A", // OMDb does not provide
+        setLoadingMovie(true);
+        const res = await fetch(
+          `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&type=${media}&apikey=${apikey}`
+        );
+        const data = await res.json();
 
-          },
-          imdbId: data.imdbId || data.imdbID,
-          media_type: data.media || data.Type || data.Media,
-        };
-        setMovie(mappedMovie);
+        if (data.Response === "True") {
+          const mappedMovie = {
+            title: data.Title,
+            poster: data.Poster,
+            year: data.Year,
+            runtime: data.Runtime,
+            genres: data.Genre.split(", "),
+            synopsis: data.Plot,
+            rating: data.imdbRating,
+            cast: data.Actors.split(", ").map((name) => ({
+              name,
+              img: "/placeholder.jpg", // OMDb has no actor images
+            })),
+            gallery: [data.Poster],
+            details: {
+              director: data.Director,
+              writers: data.Writer,
+              budget: "N/A", // OMDb does not provide
 
+            },
+            imdbId: data.imdbId || data.imdbID,
+            media_type: data.media || data.Type || data.Media,
+          };
+          setMovie(mappedMovie);
 
-        async function loadMoreLikeThisviaTMDB(imdbId, media) {
-          try {
-            const findUrl = `https://api.themoviedb.org/3/find/${imdbId}?api_key=${tmdbApi}&external_source=imdb_id`;
-            const findRes = await fetch(findUrl);
-            const findData = await findRes.json();
-
-            if ((!findData.movie_results || findData.movie_results.length === 0) && (!findData.tv_results || findData.tv_results.length === 0)) {
-              return [];
-            }
-
-            const tmdbId = findData.movie_results && findData.movie_results.length != 0 ? findData.movie_results[0].id : findData.tv_results && findData.tv_results.length != 0 ? findData.tv_results[0].id : null;
-
-
-            if (tmdbId && tmdbId === null) {
-              return [];
-            }
-            // Step 2: Fetch similar movies using TMDB ID
-            const tmdbMedia = media === "series" ? "tv" : "movie";
-            const similarUrl = `https://api.themoviedb.org/3/${tmdbMedia}/${tmdbId}/recommendations?api_key=${tmdbApi}&language=en-US&page=1`;
-            const similarRes = await fetch(similarUrl);
-            const similarData = await similarRes.json();
-
-            // console.log("Similar Movies (raw TMDB):", similarData.results);
-
-            // Step 3: Map TMDB results to OMDb-style structure for UI
-            const mapped = (similarData.results || []).map(movie => ({
-              Title: movie.title || movie.name,
-              Poster: movie.poster_path
-                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                : "/placeholder.jpg",
-              imdbRating: movie.vote_average?.toFixed(1),
-              tmdb_id: movie.id || movie.tmdbId, // TMDB ID for navigation
-              Type: movie.media_type,
-            }));
-
-            return mapped;
-
-          } catch (error) {
-            // console.error("Error fetching similar movies:", error);
-            return [];
-          }
+        } else {
+          setMovie(null);
+          setMovieNotFound(true);
         }
-        async function loadMoreLikeThisviaGemini() {
-
-          try {
-            const title = data.Title || data.title;
-            const media = data.media || data.Type || data.Media;
-            // console.log(`Fetching similar ${media} for:`, title);
-            const recs = await getDetailedSimilarMovies(title, media);
-            // console.log(`Similar Movies for ${title}:`, recs);
-            setSimilarMovies(recs);
-            return recs;
-          } catch (e) {
-            // console.error("Error fetching similar movies:", e);
-            return [];
-          }
-        }
-
-        let similarData = [];
-
-        try {
-          similarData = await loadMoreLikeThisviaTMDB(data.imdbId || data.imdbID, data.media || data.Type || data.Media);
-          if (!similarData || similarData.length === 0) {
-            // console.warn("TMDB blocked or returned no data, switching to Gemini...");
-            similarData = await loadMoreLikeThisviaGemini();
-          }
-        } catch (err) {
-          // console.error("TMDB fetch error, using Gemini fallback:", err);
-          similarData = await loadMoreLikeThisviaGemini();
-        }
-
-        setSimilarMovies(similarData);
-
-      } else {
-        setMovie({ Response: "False" });
+      } catch (error) {
+        console.log("Error:", error);
+      }finally{
+        setLoadingMovie(false);
       }
+
     }
 
 
@@ -267,6 +181,7 @@ Return only in JSON:
     }
 
     fetchMovie();
+    getSimilarMovies();
     checkMovie(movie?.imdbId || movie?.imdbID || imdbId);
 
   }, [imdbId]);
@@ -292,6 +207,9 @@ Return only in JSON:
 
   }, [moreOpen])
 
+
+
+  //PROVDER MAP
   const PROVIDER_MAP = {
     // Netflix
     "Netflix": "Netflix",
@@ -372,7 +290,7 @@ Return only in JSON:
     "Sun NXT": sunnxt
   };
 
-  // GET SIMILAR SECTION
+  // GET Stream Section
   useEffect(() => {
     if (!imdbId) return;
 
@@ -384,7 +302,6 @@ Return only in JSON:
       try {
         const response = await fetch(url);
         const result = await response.json();
-        // console.log(result);
 
         if (result.length == 0) return;
 
@@ -418,8 +335,6 @@ Return only in JSON:
 
   }, [imdbId])
 
-  if (!movie) return <p className="text-white">Loading...</p>;
-  if (movie.Response === "False") return <p className="text-red-500">Movie not found</p>;
 
   async function handleWatchTrailer(imdbId) {
     if (!imdbId) return;
@@ -651,9 +566,15 @@ Return only in JSON:
 
   // Function to add to Collection
   async function handleAddToCollection() {
-    await getCollections();
-    setMoreOpen(false);
-    setAddtoCollectionOpen(true);
+    setFetchingCollections(true);
+
+    try {
+      await getCollections();
+      setMoreOpen(false);
+      setAddtoCollectionOpen(true);
+    } finally {
+      setFetchingCollections(false);
+    }
   }
 
   async function handleAddMovieToCollection(collection) {
@@ -673,6 +594,7 @@ Return only in JSON:
     }
 
     try {
+      setAddingMovieToCollection(true);
       const response = await fetch(`${baseurl}/collectionmovie/add`, {
         method: "POST",
         headers: {
@@ -699,8 +621,39 @@ Return only in JSON:
     } finally {
       setAddtoCollectionOpen(false);
       setMoreOpen(false);
+      setAddingMovieToCollection(false);
     }
   }
+
+  //Function to handle Share
+  async function handleShare() {
+    if (!movie || !imdbId) return;
+
+    const imdbIdFinal = movie?.imdbId || movie?.imdbID || imdbId;
+
+    const url = `${window.location.origin}/page/${movie.media_type}/${imdbIdFinal}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: movie.title,
+          text: `Check out my movie collection "${movie.title}"`,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+
+  
+  if (loadingMovie===true) return <MoviePageSkeleton />;
+
+  if (movieNotFound === true) return <PageNotFound />;
 
   return (
     <div className="min-h-screen bg-[#0B0B0C] text-white p-4 md:p-8 flex justify-center">
@@ -715,33 +668,65 @@ Return only in JSON:
 
           {
             moreOpen && (
-              <div ref={moreOpenRef} className="absolute top-8 z-10 right-2 w-36 rounded-lg bg-gray-800 shadow-lg border border-gray-700 ">
-                <button onClick={() => handleAddToCollection()} className=" cursor-pointer w-full text-left text-sm px-2 py-2 hover:bg-gray-700">Add to Collection</button>
-                <button className="cursor-pointer w-full text-left text-sm px-2 py-2 hover:bg-gray-700">Share Movie</button>
+              <div
+                ref={moreOpenRef}
+                className="absolute top-8 z-10 right-2 w-40 rounded-lg bg-gray-800 shadow-lg border border-gray-700"
+              >
+                <button
+                  onClick={handleAddToCollection}
+                  disabled={fetchingCollections}
+                  className="w-full px-2 py-2 text-left text-sm hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {fetchingCollections ? (
+                    <div className="flex justify-center items-center">
+                      <div className="h-4 w-4 border-2 border-gray-500 border-t-[#00FFD1] rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    "Add to Collection"
+                  )}
+                </button>
+
+                <button onClick={handleShare}
+                  className="w-full px-2 py-2 text-left text-sm hover:bg-gray-700">
+                  Share Movie
+                </button>
               </div>
             )
           }
 
           {
             !moreOpen && addToCollectionOpen && (
-              <div className="absolute top-8 right-10 w-64 max-h-50 overflow-auto bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-20"
+              <div
+                className="absolute top-8 right-10 w-64 max-h-50 overflow-auto bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-20"
                 style={{
                   scrollbarWidth: "none",
                   msOverflowStyle: "none",
-                }}>
+                }}
+              >
                 <button onClick={() => setAddtoCollectionOpen(false)}>
                   <X size={15} className="right-2 absolute top-1" />
                 </button>
+
                 <div className="max-h-72 overflow-y-auto">
-                  {collections.map((item) => (
-                    <button
-                      key={item.id}
-                      className="w-full px-4 py-3 text-left text-white hover:bg-zinc-800 transition-colors duration-200 border-b border-zinc-800 last:border-b-0"
-                      onClick={() => handleAddMovieToCollection(item)}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
+                  {collections.length === 0 ? (
+                    <p className="px-4 pb-2">No collections yet</p>
+                  ) : (
+                    addingMovieToCollection ? (
+                      <div className="flex items-center justify-center py-6">
+                        <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      </div>
+                    ) : (
+                      collections.map((item) => (
+                        <button
+                          key={item.id}
+                          className="w-full px-4 py-3 text-left text-white hover:bg-zinc-800 transition-colors duration-200 border-b border-zinc-800 last:border-b-0"
+                          onClick={() => handleAddMovieToCollection(item)}
+                        >
+                          {item.name}
+                        </button>
+                      ))
+                    )
+                  )}
                 </div>
               </div>
             )
@@ -962,7 +947,7 @@ const Section = ({ data }) => {
       </div>
       <div className="flex gap-5 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {data.filter(movie => movie.Poster && movie.Poster !== "N/A").map((item, index) => (
+        {data.filter(movie => movie.poster && movie.poster !== "N/A").map((item, index) => (
           <MovieCard key={index} {...item} />
         ))}
       </div>
@@ -971,63 +956,61 @@ const Section = ({ data }) => {
 };
 
 
-const MovieCard = ({ Title, Poster, imdbRating, imdbId, Type, tmdb_id }) => {
-  const navigate = useNavigate();
+const MovieCard = ({ title, poster, rating, tmdb_id }) => {
+  // const navigate = useNavigate();
 
-  async function handleViewDetails(e) {
-    console.log("Clicked on: " + Title)
-    console.log({
-      Title, Poster, imdbRating, imdbId, Type, tmdb_id
-    })
-    e.preventDefault();
-    let finalImdbId = imdbId;
+  // async function handleViewDetails(e) {
+  //   console.log("Clicked on: " + title)
 
-    if (!finalImdbId && tmdb_id) {
-      const mediaType = Type === "series" || Type === "tv" ? "tv" : "movie";
-      finalImdbId = await fetchImdbId(tmdb_id, mediaType);
-    }
+  //   e.preventDefault();
+  //   let finalImdbId = imdbId;
+
+  //   if (!finalImdbId && tmdb_id) {
+  //     const mediaType = Type === "series" || Type === "tv" ? "tv" : "movie";
+  //     finalImdbId = await fetchImdbId(tmdb_id, mediaType);
+  //   }
 
 
-    if (finalImdbId) {
-      navigate(`/page/${Type}/${encodeURIComponent(finalImdbId)}`);
-    } else {
-      // console.warn("Could not navigate: IMDb ID missing");
-    }
-  }
+  //   if (finalImdbId) {
+  //     navigate(`/page/${Type}/${encodeURIComponent(finalImdbId)}`);
+  //   } else {
+  //     // console.warn("Could not navigate: IMDb ID missing");
+  //   }
+  // }
 
-  async function fetchImdbId(tmdb_id, media) {
-    try {
-      // console.log("Fetching ImdbId")
-      const res = await fetch(`https://api.themoviedb.org/3/${media}/${tmdb_id}/external_ids?api_key=${tmdbApi}`);
-      const data = await res.json();
-      const imdbId = data.imdb_id;
-      return imdbId;
-    } catch (error) {
-      // console.log("Could not fetch ImdbIb" + error);
-      return null;
-    }
-  }
+  // async function fetchImdbId(tmdb_id, media) {
+  //   try {
+  //     // console.log("Fetching ImdbId")
+  //     const res = await fetch(`https://api.themoviedb.org/3/${media}/${tmdb_id}/external_ids?api_key=${tmdbApi}`);
+  //     const data = await res.json();
+  //     const imdbId = data.imdb_id;
+  //     return imdbId;
+  //   } catch (error) {
+  //     // console.log("Could not fetch ImdbIb" + error);
+  //     return null;
+  //   }
+  // }
 
   return (
-    <div onClick={handleViewDetails} className="cursor-pointer md:w-[180px] w-[110px] flex-shrink-0 rounded-xl overflow-hidden shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300 bg-gray-900 text-white">
+    <div className="cursor-pointer md:w-[180px] w-[110px] flex-shrink-0 rounded-xl overflow-hidden shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300 bg-gray-900 text-white">
       {/* Image with gradient overlay */}
       <div className="relative h-30 md:h-50 w-full">
         <img
-          src={Poster}
-          alt={Title}
+          src={poster}
+          alt={title}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
         {/* Rating badge */}
         <span className="absolute top-2 right-2 bg-yellow-400 text-black md:text-sm text-xs font-bold px-2 py-1 rounded-md shadow">
-          ⭐ {imdbRating}
+          ⭐ {rating}
         </span>
       </div>
 
       {/* Title */}
       <div className="p-3">
-        <h3 className="text-sm md:text-xl font-semibold truncate">{Title}</h3>
+        <h3 className="text-sm md:text-xl font-semibold truncate">{title}</h3>
       </div>
     </div>
   );

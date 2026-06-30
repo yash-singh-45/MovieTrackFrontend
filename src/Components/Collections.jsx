@@ -3,6 +3,7 @@ import { replace, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from './AuthContext';
 import { Skeleton } from './Skeleton';
 import toast from 'react-hot-toast';
+import PageNotFound from './PageNotFound';
 
 const Collections = () => {
 
@@ -11,6 +12,8 @@ const Collections = () => {
     const baseurl = import.meta.env.VITE_BASE_URL;
     const navigate = useNavigate();
     const [collection, setCollection] = useState(null);
+
+    const [collectionNotFound, setCollectionNotFound] = useState(false);
 
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -23,6 +26,7 @@ const Collections = () => {
             if (!response.ok) {
                 const error = await response.json();
                 toast.error(error.error);
+                setCollectionNotFound(true);
                 return;
             }
 
@@ -80,6 +84,7 @@ const Collections = () => {
     }, [publicId]);
 
     if (loading) return <Skeleton />
+    if(collectionNotFound) return <PageNotFound />
 
     if (movies.length === 0) {
         return (
