@@ -14,7 +14,7 @@ import appletv from '/src/assets/apple-tv.jpg'
 import lionsgate from '/src/assets/lionsgate_logo.png'
 import sunnxt from '/src/assets/sunnxt_logo.png'
 import { AuthContext } from "./AuthContext";
-import { Heart, HeartCrack, HeartIcon, HeartOff, X } from "lucide-react";
+import { Heart, HeartCrack, HeartIcon, HeartOff, X , Loader2} from "lucide-react";
 import { MoreHorizontal } from "lucide-react";
 import MoviePageSkeleton from "./MoviePageSkeleton";
 import PageNotFound from "./PageNotFound";
@@ -48,6 +48,9 @@ export default function MoviePage() {
   const [collections, setCollections] = useState([]);
   const [fetchingCollections, setFetchingCollections] = useState(false);
   const [addingMovieToCollection, setAddingMovieToCollection] = useState(false);
+
+  const [favLoading, setFavLoading] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -139,7 +142,7 @@ export default function MoviePage() {
         }
       } catch (error) {
         console.log("Error:", error);
-      }finally{
+      } finally {
         setLoadingMovie(false);
       }
 
@@ -155,6 +158,7 @@ export default function MoviePage() {
 
       if (!token || !user) {
         setInWatchlist(false);
+        setInFavourite(false);
         return;
       }
 
@@ -374,10 +378,10 @@ export default function MoviePage() {
       imdbId: imdbIdFinal,
       title: movie.title,
       posterPath: movie.poster,
-      rating: movie.rating==='N/A'?null:movie.rating
+      rating: movie.rating === 'N/A' ? null : movie.rating
     }
 
-    console.log(data);
+    setWatchlistLoading(true);
 
     try {
       const response = await fetch(`${baseurl}/list/watchlist/add`, {
@@ -400,6 +404,8 @@ export default function MoviePage() {
     } catch (err) {
       toast.error("Error adding to watchlist");
       console.error("Error adding to watchlist:", err);
+    } finally{
+      setWatchlistLoading(false);
     }
   }
 
@@ -453,8 +459,7 @@ export default function MoviePage() {
 
   //Function to add to Favs
   async function addToFavourite() {
-
-    if (inFavourite === true) return;
+    if (favLoading || inFavourite) return;
 
     const token = localStorage.getItem("token");
 
@@ -471,8 +476,14 @@ export default function MoviePage() {
       imdbId: imdbIdFinal,
       title: movie.title,
       posterPath: movie.poster,
-      rating: movie.rating
-    }
+      rating: movie.rating === 'N/A' ? null : movie.rating
+    };
+
+    const prevFavourite = inFavourite;
+
+    setInFavourite(true);
+    setFavLoading(true);
+
 
     try {
       const response = await fetch(`${baseurl}/list/favourites/add`, {
@@ -493,8 +504,11 @@ export default function MoviePage() {
       toast.success(result);
       setInFavourite(true);
     } catch (err) {
+      setInFavourite(prevFavourite);
       toast.error("Error adding to favourites");
       console.error("Error adding to favourites:", err);
+    } finally {
+      setFavLoading(false);
     }
   }
 
@@ -650,8 +664,8 @@ export default function MoviePage() {
       console.error(err);
     }
   }
-  
-  if (loadingMovie===true) return <MoviePageSkeleton />;
+
+  if (loadingMovie === true) return <MoviePageSkeleton />;
 
   if (movieNotFound === true) return <PageNotFound />;
 
@@ -813,13 +827,14 @@ export default function MoviePage() {
                 <div className="flex w-full md:w-2/3 text-sm md:text-sm items-center justify-between lg:text-lg md:ml-5">
                   <button
                     onClick={inWatchlist ? handleRemoveFromWatchlist : handleAddToWatchlist}
+                    disabled={watchlistLoading}
                     className="md:px-4 md:py-2 px-3 py-2 bg-transparent border border-teal-400 text-teal-400 rounded-full font-medium shadow-md hover:bg-teal-500/20 transition"
                   >
                     {inWatchlist ? "❌ Remove from Watchlist" : "➕ Add to Watchlist"}
                   </button>
 
 
-                  <button onClick={inFavourite ? removeFavourite : addToFavourite} className=" hover:cursor-pointer">
+                  <button onClick={inFavourite ? removeFavourite : addToFavourite} disabled={favLoading} className=" hover:cursor-pointer">
                     <Heart className={`h-10 w-10 md:h-12 md:w-12 ${inFavourite ? "fill-red-600" : ""}`} />
                   </button>
                 </div>
