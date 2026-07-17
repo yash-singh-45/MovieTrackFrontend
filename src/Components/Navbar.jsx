@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar';
+import { ChevronDown } from 'lucide-react';
+import { SearchContext } from './SearchContext';
 
 const storage_key = 'search_history';
 
@@ -14,6 +16,10 @@ const Navbar = () => {
   const inputRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [sideBarOpen, setSideBarOpen] = useState(false);
+  const {searchOption, setSearchOption} = useContext(SearchContext);
+  const [optionOpen, setOptionOpen] = useState(false);
+
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem(storage_key)) || [];
@@ -29,6 +35,26 @@ const Navbar = () => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (optionOpen === false) return;
+
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOptionOpen(false);
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClickOutside);
+    };
+
+  }, [optionOpen])
 
   function handleKeyDown(e) {
     if (!showDropdown || suggestion.length === 0) return;
@@ -89,7 +115,7 @@ const Navbar = () => {
       return;
     }
 
-    navigate(`/search?query=${encodeURIComponent(searchBox)}`);
+    navigate(`/search?query=${encodeURIComponent(searchBox)}&type=${searchOption}`);
   }
 
   function handleSuggestionClick(q) {
@@ -102,17 +128,43 @@ const Navbar = () => {
 
   }
 
+
   return (
     <div className='sticky top-0 z-50 bg-[#0F1115] shadow-md'>
       <nav className=" flex items-center justify-between pt-2 md:pt-4 px-5 py-4 md:px-8 md:py-1 shadow-md">
         <h1 onClick={() => navigate("/")} className="text-cyan-400 text-1xl md:text-3xl font-bold cursor-pointer">🎬 CineTrack</h1>
 
-        <div className='relative w-1/2 md:w-1/3 flex gap-3'>
+        <div className='relative w-3/5 md:w-1/2 lg:w-2/5 flex gap-1 md:gap-3'>
 
-          <form ref={wrapperRef} onSubmit={handleSubmit} className="relative w-full">
+          <form ref={wrapperRef} onSubmit={handleSubmit} className="relative  gap-1 md:gap-3 items-center flex w-full">
+            <ChevronDown onClick={() => {
+              setOptionOpen(optionOpen === true ? false : true);
+              setShowDropdown(false);
+            }
+            } size={23} className='cursor-pointer' />
+
+            {
+              optionOpen && (
+                <div ref={menuRef} className="absolute top-15 left-0 w-36 rounded-lg bg-gray-800 shadow-lg border border-gray-700">
+                  <button onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchOption("movies");
+                    setOptionOpen(false);
+                  }} className="w-full text-left px-4 py-2 hover:bg-gray-700">Search Movies</button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchOption("personalities");
+                      setOptionOpen(false);
+                    }} className="w-full text-left px-4 py-2  hover:bg-gray-700">Search Celebs</button>
+
+                </div>
+              )
+            }
             <input
               type="search"
-              placeholder="Search movies..."
+              placeholder={`Search ${searchOption}...`}
               value={searchBox}
               onKeyDown={handleKeyDown}
               ref={inputRef}
@@ -130,7 +182,7 @@ const Navbar = () => {
             />
 
             {showDropdown && (
-              <div className="absolute mt-2 w-full bg-[#1A1C22] border border-cyan-500 rounded-lg shadow-lg z-50">
+              <div className="absolute top-10 md:top-15 mt-2 w-full bg-[#1A1C22] border border-cyan-500 rounded-lg shadow-lg z-50">
                 {suggestion.map((item, idx) => (
                   <div
                     key={idx}
@@ -144,12 +196,14 @@ const Navbar = () => {
               </div>
             )}
           </form>
+
           <button
             onClick={() => setSideBarOpen(true)}
             className="text-white text-2xl md:text-3xl hover:text-cyan-400 transition cursor-pointer"
           >
             ☰
           </button>
+
         </div>
       </nav>
 

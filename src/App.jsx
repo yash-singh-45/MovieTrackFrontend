@@ -14,6 +14,7 @@ import Reviews from "./Components/Reviews";
 import WriteReview from "./Components/WriteReview";
 import Favourites from "./Components/Favourites";
 import Collections from "./Components/Collections";
+import PageNotFound from "./Components/PageNotFound";
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
   {
     path:"/collections/:publicId",
     element: <Collections />
+  },
+  {
+    path: "*",
+    element:<PageNotFound />
   }
 ]);
 

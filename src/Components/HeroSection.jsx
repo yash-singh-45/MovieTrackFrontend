@@ -8,7 +8,14 @@ import meiyazhagan from "../assets/meiyazhagan.jpg";
 import dark from "../assets/dark.jpg";
 
 export default function HeroSection() {
-  const heroMovies = [
+
+  const apikey = import.meta.env.VITE_TMDB_API_KEY;
+  const baseurl = import.meta.env.VITE_BASE_URL;
+
+  const [loading, setLoading] = useState(true);
+  const [heroMovies, setHeroMovies] = useState([]);
+
+  const defaultHeroMovies = [
     {
       title: "Dhurandhar",
       image: dhurandhar,
@@ -51,8 +58,49 @@ export default function HeroSection() {
       imdbId: "tt5753856",
       media_type: "tv"
     }
-  ]
+  ];
+
+  const getHeroMovies = async () => {
+
+    try {
+      setLoading(true);
+      const url = `${baseurl}/tmdbapi/heromovies`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.log("Could not load hero movies");
+      }
+      const result = await response.json();
+
+      console.log(result);
+
+      const movies = result.results
+        .filter(item => item.backdrop_path)
+        .sort((a, b) => b.popularity - a.popularity)
+        .slice(0, 7)
+        .map(item => ({
+          title: item.title || item.name,
+          image: `https://image.tmdb.org/t/p/original${item.backdrop_path}`,
+          tmdbId: item.id,
+          media_type: item.media_type,
+          popularity: item.popularity,
+        }));
+      console.log(movies);
+
+      setHeroMovies(movies);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getHeroMovies();
+  }, []);
+
   return (
-    <BlockCard heroMovies={heroMovies} />
+    <BlockCard heroMovies={heroMovies ? heroMovies.length != 0 ? heroMovies : defaultHeroMovies : defaultHeroMovies} loading={loading} setLoading={setLoading} />
   );
 }

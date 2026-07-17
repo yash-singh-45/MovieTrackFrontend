@@ -374,8 +374,10 @@ export default function MoviePage() {
       imdbId: imdbIdFinal,
       title: movie.title,
       posterPath: movie.poster,
-      rating: movie.rating
+      rating: movie.rating==='N/A'?null:movie.rating
     }
+
+    console.log(data);
 
     try {
       const response = await fetch(`${baseurl}/list/watchlist/add`, {
@@ -637,7 +639,7 @@ export default function MoviePage() {
       if (navigator.share) {
         await navigator.share({
           title: movie.title,
-          text: `Check out my movie collection "${movie.title}"`,
+          text: `Check out movie "${movie.title}"`,
           url,
         });
       } else {
@@ -648,8 +650,6 @@ export default function MoviePage() {
       console.error(err);
     }
   }
-
-
   
   if (loadingMovie===true) return <MoviePageSkeleton />;
 
