@@ -123,7 +123,7 @@ export default function ActorPagePreview() {
 }
 
 function Actors({ castdata, crewdata, overview, castSortBy, crewSortBy, setCastCredits, setCrewCredits,
-     navigate, loading, setCastSortBy, setCrewSortBy }) {
+    navigate, loading, setCastSortBy, setCrewSortBy }) {
 
     if (loading || !overview) {
         return <ActorsSkeleton />;
@@ -233,87 +233,90 @@ function Actors({ castdata, crewdata, overview, castSortBy, crewSortBy, setCastC
                     </div>
                 </div>
 
-                {/* Cinema Visual Matrix Grid */}
-                <div className=' p-2 border border-white/50 rounded-lg'>
-                    <div className='flex justify-between'>
-                        <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-                            Cast
-                        </h2>
+                {/* Cinema Visual Matrix Grid */} {
+                    castdata.length != 0 &&
+                    <div className=' p-2 border border-white/50 rounded-lg'>
+                        <div className='flex justify-between'>
+                            <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
+                                Cast
+                            </h2>
 
-                        <select
-                            id="cast-sort"
-                            value={castSortBy}
-                            onChange={handleCastSort}
-                            className=' px-1 md:px-3.5 md:py-2 rounded-xl text-xs font-semibold md:font-bold border border-white/10 bg-[#0F1115] text-white hover:bg-[#16181D] focus:outline-none focus:border-cyan-500 transition-all cursor-pointer'
-                        >
-                            <option value="" disabled>↑↓ Sort By</option>
-                            <option value="popularity">Popularity</option>
-                            <option value="rating">Top Ratings</option>
-                            <option value="year">Released Year</option>
-                        </select>
+                            <select
+                                id="cast-sort"
+                                value={castSortBy}
+                                onChange={handleCastSort}
+                                className=' px-1 md:px-3.5 md:py-2 rounded-xl text-xs font-semibold md:font-bold border border-white/10 bg-[#0F1115] text-white hover:bg-[#16181D] focus:outline-none focus:border-cyan-500 transition-all cursor-pointer'
+                            >
+                                <option value="" disabled>↑↓ Sort By</option>
+                                <option value="popularity">Popularity</option>
+                                <option value="rating">Top Ratings</option>
+                                <option value="year">Released Year</option>
+                            </select>
+                        </div>
+
+                        <div style={{
+                            overflowY: "auto",
+                            scrollbarWidth: "thin",
+                            scrollbarColor: "#555 transparent"
+                        }}
+                            className=" grid grid-cols-3 py-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 my-2 max-h-[400px] md:max-h-[525px] overflow-y-auto">
+
+                            {castdata
+                                .filter(movie => movie.vote_average !== 0 && movie.poster_path)
+                                .map((movie) => (
+                                    <MovieCard
+                                        key={movie.credit_id || `${movie.id}-${movie.media_type}`}
+                                        movie={movie}
+                                        navigate={navigate}
+                                    />
+                                ))
+                            }
+                        </div>
                     </div>
+                }
 
-                    <div style={{
-                        overflowY: "auto",
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#555 transparent"
-                    }}
-                        className=" grid grid-cols-3 py-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 my-2 max-h-[400px] md:max-h-[525px] overflow-y-auto">
+                {
+                    crewdata.length != 0 && 
+                    <div className='border border-white/50 mt-15 p-2 rounded-lg'>
+                        <div className='flex justify-between'>
+                            <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
+                                Crew
+                            </h2>
 
-                        {castdata
-                            .filter(movie => movie.vote_average !== 0 && movie.poster_path)
-                            .map((movie) => (
-                                <MovieCard
-                                    key={movie.credit_id || `${movie.id}-${movie.media_type}`}
-                                    movie={movie}
-                                    navigate={navigate}
-                                />
-                            ))
-                        }
+                            <select
+                                id="crew-sort"
+                                value={crewSortBy}
+                                onChange={handleCrewSort}
+                                className=' px-1 md:px-3.5 md:py-2 rounded-xl text-xs font-semibold md:font-bold border border-white/10 bg-[#0F1115] text-white hover:bg-[#16181D] focus:outline-none focus:border-cyan-500 transition-all cursor-pointer'
+                            >
+                                <option value="" disabled>↑↓ Sort By</option>
+                                <option value="popularity">Popularity</option>
+                                <option value="rating">Top Ratings</option>
+                                <option value="year">Released Year</option>
+                            </select>
+                        </div>
+
+
+                        <div style={{
+                            overflowY: "auto",
+                            scrollbarWidth: "thin",
+                            scrollbarColor: "#555 transparent"
+                        }}
+                            className=" grid grid-cols-3 py-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 my-2 max-h-[400px] md:max-h-[525px] overflow-y-auto">
+
+                            {crewdata
+                                .filter(movie => movie.vote_average !== 0 && movie.poster_path)
+                                .map((movie) => (
+                                    <MovieCard
+                                        key={movie.credit_id || `${movie.id}-${movie.media_type}`}
+                                        movie={movie}
+                                        navigate={navigate}
+                                    />
+                                ))
+                            }
+                        </div>
                     </div>
-                </div>
-
-                <div className='border border-white/50 mt-15 p-2 rounded-lg'>
-                    <div className='flex justify-between'>
-                        <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-                            Crew
-                        </h2>
-
-                        <select
-                            id="crew-sort"
-                            value={crewSortBy}
-                            onChange={handleCrewSort}
-                            className=' px-1 md:px-3.5 md:py-2 rounded-xl text-xs font-semibold md:font-bold border border-white/10 bg-[#0F1115] text-white hover:bg-[#16181D] focus:outline-none focus:border-cyan-500 transition-all cursor-pointer'
-                        >
-                            <option value="" disabled>↑↓ Sort By</option>
-                            <option value="popularity">Popularity</option>
-                            <option value="rating">Top Ratings</option>
-                            <option value="year">Released Year</option>
-                        </select>
-                    </div>
-
-
-                    <div style={{
-                        overflowY: "auto",
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#555 transparent"
-                    }}
-                        className=" grid grid-cols-3 py-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 my-2 max-h-[400px] md:max-h-[525px] overflow-y-auto">
-
-                        {crewdata
-                            .filter(movie => movie.vote_average !== 0 && movie.poster_path)
-                            .map((movie) => (
-                                <MovieCard
-                                    key={movie.credit_id || `${movie.id}-${movie.media_type}`}
-                                    movie={movie}
-                                    navigate={navigate}
-                                />
-                            ))
-                        }
-                    </div>
-                </div>
-
-
+                }
             </div>
         </div >
     );
