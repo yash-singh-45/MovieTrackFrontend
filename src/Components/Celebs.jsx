@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useParams } from 'react-router-dom'
 
-const Actors = () => {
+const Celebs = () => {
     const navigate = useNavigate();
 
     const omdbapi = import.meta.env.VITE_OMDB_API_KEY;
@@ -209,7 +209,7 @@ const Actors = () => {
     )
 }
 
-export default Actors
+export default Celebs
 
 
 function MovieCard({ movie, navigate }) {

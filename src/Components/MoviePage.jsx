@@ -445,17 +445,12 @@ export default function MoviePage() {
     }
   }
 
-  function handleActorClick(name) {
+  function handleCelebsClick(name) {
     const encoded_name = encodeURIComponent(name);
 
-    navigate(`/bio/actor/${encoded_name}`)
+    navigate(`/bio/${encoded_name}`)
   }
 
-  function handleDirectorClick(name) {
-    const encoded_name = encodeURIComponent(name);
-
-    navigate(`/bio/director/${encoded_name}`)
-  }
 
   //Function to add to Favs
   async function addToFavourite() {
@@ -879,7 +874,7 @@ export default function MoviePage() {
               <div className="flex gap-5 md:gap-10 overflow-x-auto pb-2">
                 {movie.cast.map((c) => (
                   <div key={c.name} className="flex-shrink-0 w-20 text-center">
-                    <p onClick={() => handleActorClick(c.name)} className=" hover:underline text-xs cursor-pointer text-blue-400 md:text-sm  lg:text-base mt-2 ">{c.name}</p>
+                    <p onClick={() => handleCelebsClick(c.name)} className=" hover:underline text-xs cursor-pointer text-blue-400 md:text-sm  lg:text-base mt-2 ">{c.name}</p>
                   </div>
                 ))}
               </div>
@@ -922,7 +917,7 @@ export default function MoviePage() {
               <h3 className="text-lg md:text-xl lg:text-2xl font-semibold mb-2">Details</h3>
               <p className="text-sm md:text-base lg:text-lg">
                 <span className=" text-gray-300">Director: </span>
-                <span onClick={() => handleDirectorClick(movie.details.director)} className="text-blue-400 hover:underline cursor-pointer">{movie.details.director}</span>
+                <span onClick={() => handleCelebsClick(movie.details.director)} className="text-blue-400 hover:underline cursor-pointer">{movie.details.director}</span>
               </p>
               <p className="text-sm md:text-base lg:text-lg text-gray-300">Writers: {movie.details.writers}</p>
               <p className="text-sm md:text-base lg:text-lg text-gray-300">Budget: {movie.details.budget}</p>

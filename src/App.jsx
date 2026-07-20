@@ -9,13 +9,13 @@ import SearchSection from "./Components/SearchSection";
 import Navbar from "./Components/Navbar";
 import MoviePage from "./Components/MoviePage";
 import WatchList from "./Components/WatchList";
-import Actors from "./Components/Actors";
 import Reviews from "./Components/Reviews";
+import Celebs from "./Components/Celebs";
 import WriteReview from "./Components/WriteReview";
 import Favourites from "./Components/Favourites";
 import Collections from "./Components/Collections";
 import PageNotFound from "./Components/PageNotFound";
-
+import ActorPagePreview from "./Components/ActorPreview";
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -54,8 +54,8 @@ const router = createBrowserRouter([
     element: <Favourites />
   },
   {
-    path: "/bio/:role/:name",
-    element: <Actors />
+    path: "/bio/:name",
+    element: <ActorPagePreview />
   },
   {
     path: "/reviews/:imdbId",
@@ -72,6 +72,10 @@ const router = createBrowserRouter([
   {
     path: "*",
     element:<PageNotFound />
+  },
+  {
+    path:"/actordemo",
+    element: <ActorPagePreview />
   }
 ]);
 

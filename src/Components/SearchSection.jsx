@@ -249,7 +249,11 @@ function PersonCard({ person, navigate }) {
 
     const role = person.known_for_department === "Acting" ? "actor" : "director";
     const name = person.original_name;
-    navigate(`/bio/${role}/${name}`);
+    navigate(`/bio/${name}`, {
+      state:{
+        id:person.id
+      }
+    });
   }
 
   return (
