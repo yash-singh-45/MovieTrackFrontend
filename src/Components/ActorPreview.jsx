@@ -1,3 +1,4 @@
+import { Instagram } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
@@ -69,7 +70,8 @@ export default function ActorPagePreview() {
             }
 
             const data = await response.json();
-
+            console.log(data.external_ids);
+            
             setOverview({
                 name: data.name,
                 profile_path: data.profile_path ? `https://image.tmdb.org/t/p/w780/${data.profile_path}` : null,
@@ -78,7 +80,11 @@ export default function ActorPagePreview() {
                 place_of_birth: data.place_of_birth,
                 popularity: data.popularity,
                 known_for_department: data.known_for_department === "Acting" ? "Actor" : data.known_for_department === "Directing" ? "Director" : data.known_for_department === "Writing" ? "Writer" : "Artist",
-                homepage: data.homepage
+                homepage: data.homepage,
+                imdb_id: data.external_ids?.imdb_id || data.imdb_id || null,
+                instagram_id: data.external_ids?.instagram_id || null,
+                twitter_id: data.external_ids?.twitter_id || null,
+
             })
 
             setCastCredits(data.combined_credits?.cast || []);
@@ -211,6 +217,8 @@ function Actors({ castdata, crewdata, overview, castSortBy, crewSortBy, setCastC
                             )}
                         </div>
 
+                        <SocialLinks overview={overview} />
+
                         <p className="border rounded-lg text-justify text-slate-400 p-2 scrollbar-thin max-h-72 overflow-y-auto pr-2 text-sm md:text-base leading-relaxed font-light"
                             style={{
                                 scrollbarWidth: "none",
@@ -276,7 +284,7 @@ function Actors({ castdata, crewdata, overview, castSortBy, crewSortBy, setCastC
                 }
 
                 {
-                    crewdata.length != 0 && 
+                    crewdata.length != 0 &&
                     <div className='border border-white/50 mt-15 p-2 rounded-lg'>
                         <div className='flex justify-between'>
                             <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
@@ -321,6 +329,93 @@ function Actors({ castdata, crewdata, overview, castSortBy, crewSortBy, setCastC
         </div >
     );
 }
+function SocialLinks({ overview }) {
+    const { imdb_id, instagram_id, twitter_id, homepage } = overview;
+    console.log(overview);
+    
+    const links = [
+        imdb_id && {
+            key: "imdb",
+            href: `https://www.imdb.com/name/${imdb_id}`,
+            label: "IMDb Profile",
+            platform: "imdb",
+            icon: <ImdbMark />,
+        },
+        instagram_id && {
+            key: "instagram",
+            href: `https://www.instagram.com/${instagram_id}`,
+            label: "Instagram",
+            platform: "instagram",
+            icon: <Instagram size={18} strokeWidth={2} />,
+        },
+        twitter_id && {
+            key: "twitter",
+            href: `https://x.com/${twitter_id}`,
+            label: "X / Twitter",
+            platform: "twitter",
+            icon: <XMark />,
+        },
+        homepage && {
+            key: "homepage",
+            href: homepage,
+            label: "Official Website",
+            platform: "website",
+            icon: <GlobeMark />,
+        },
+    ].filter(Boolean);
+
+    if (links.length === 0) return null;
+
+    return (
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
+            {links.map((link) => (
+                <a
+                    key={link.key}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={link.label}
+                    aria-label={link.label}
+                    className={`social-btn social-btn-${link.platform} group/btn relative flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-slate-300 transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg shadow-black/20`}
+                >
+                    <span className="relative z-10 transition-transform duration-300 group-hover/btn:scale-110">
+                        {link.icon}
+                    </span>
+
+                    {/* Subtle Hover Glow Effect */}
+                    <span className="absolute inset-0 rounded-xl opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none blur-md social-glow" />
+                </a>
+            ))}
+        </div>
+    );
+}
+
+function ImdbMark() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="5" width="22" height="14" rx="3" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5" />
+            <text x="12" y="15" textAnchor="middle" fontSize="7.5" fontWeight="900" fill="currentColor" fontFamily="Arial, sans-serif" letterSpacing="0.5">IMDb</text>
+        </svg>
+    );
+}
+
+function XMark() {
+    return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.9 2H22l-7.6 8.7L23.3 22H16.7l-5.2-6.8L5.6 22H2.5l8.2-9.3L1.7 2h6.8l4.7 6.2L18.9 2Zm-1.2 18.2h1.7L7.4 3.7H5.6l12.1 16.5Z" />
+        </svg>
+    );
+}
+
+function GlobeMark() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3.6 9h16.8M3.6 15h16.8" />
+            <path d="M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18" />
+        </svg>
+    );
+}
 
 function MovieCard({ movie, navigate }) {
 
@@ -343,7 +438,7 @@ function MovieCard({ movie, navigate }) {
             </div>
             <div className="md:p-3 p-1">
                 <p className="md:text-sm text-xs font-semibold mb-1 truncate ">{movie.title ? movie.title : movie.original_name}</p>
-                <p className='text-xs text-cyan-400'>{movie.job ? movie.job : "Acting"}</p>
+                <p className='text-[10px] md:text-xs truncate text-cyan-400'>{movie.job ? movie.job : movie.character}</p>
             </div>
         </div>
     );

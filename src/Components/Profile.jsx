@@ -400,22 +400,6 @@ const Profile = () => {
         )
       }
 
-
-      {/* Recently Watched */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4">Recently Watched</h3>
-        <div className="flex flex-wrap gap-2">
-          {["Sci-Fi", "Drama", "Action", "Comedy", "Thriller", "Fantasy"].map((genre, idx) => (
-            <span
-              key={idx}
-              className="bg-[#00FFD1] text-black px-3 py-1 rounded-full text-sm font-medium"
-            >
-              {genre}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* Account Settings */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Account Settings</h3>
